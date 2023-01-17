@@ -1,5 +1,5 @@
 import "dotenv/config.js";
-import "./db.js";
+import { query } from "./db.js";
 import "./auth.js";
 import express from "express";
 import cookieParser from "cookie-parser";
@@ -19,12 +19,12 @@ app.use(cookieParser());
 app.use(compression());
 app.use(morgan("dev"));
 app.use(cors());
-app.use(rateLimit({max:50})); // per minute
+app.use(rateLimit({ max: 50 })); // per minute
 // app.use(passport.initialize());
 
 // Routing
 app.get("/", (req, res) => {
-  res.send("Node.js Server is live!");
+  res.send("Node.js Server is live!");  
 });
 
 // serving static resources
