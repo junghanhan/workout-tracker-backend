@@ -14,8 +14,8 @@ const generateLogSQL = (datetime) => {
 const getLog = async (req, res) => {
   try {    
     // TODO: query string validation
-    let logSQL = generateLogSQL(req.query.datetime);
-    let log = await query(logSQL);    
+    const logSQL = generateLogSQL(req.params.datetime);    
+    const log = await query(logSQL);        
     res.status(200).json(log);
   } catch (err) {
     res.status(400).send("Bad Request");

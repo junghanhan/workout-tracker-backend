@@ -5,7 +5,7 @@ import { getLog } from "../controllers/log-api-controller.js";
 const router = express.Router();
 
 router
-  .route("/log")
+  .route("/log/:datetime")
   .get(getLog);  
   
 
