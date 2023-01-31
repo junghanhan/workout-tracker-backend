@@ -1,5 +1,4 @@
 import "dotenv/config.js";
-import { query } from "./db.js";
 import "./auth.js";
 import express from "express";
 import cookieParser from "cookie-parser";
