@@ -32,46 +32,69 @@ const getLog = async (datetime) => {
   return logData;
 };
 
+// delete log entries(sets) and log using mysql transaction
 const deleteLog = async (logID) => {
-  let result = await query(`
-    DELETE 
-    FROM log_entry
-    WHERE log_id = ?`, [logID]);
-  result = await query(`
-    DELETE 
-    FROM log 
-    WHERE log_id = ?`, [logID]);
-};
-
-const saveLog = async (log, datetime) => {
-  // check whether the log on the date already exists        
-  const existingLogID = await query(`
-    SELECT log_id
-    FROM log 
-    WHERE datetime = STR_TO_DATE(? ,"%Y-%m-%d")`, [datetime]);
-
-  // if it already exists, delete original one
-  if (existingLogID.length > 0) {
-    existingLogID.forEach((value) => {
-      deleteLog(value.log_id);
-    });
+  const conn = await pool.getConnection();
+  await conn.beginTransaction();
+  try {
+    await conn.execute(`
+      DELETE 
+      FROM log_entry
+      WHERE log_id = ?`, [logID]);
+    await conn.execute(`
+      DELETE 
+      FROM log 
+      WHERE log_id = ?`, [logID]);
+    await conn.commit();
   }
+  catch (err) {
+    conn.rollback();
+    console.log("Rollback successful");
+    throw err;
+  }
+};
 
-  // insert new log
-  const { insertId } = await query(
-    "INSERT INTO log (datetime) VALUES (?)",
-    [datetime]);
+// save log using mysql transaction
+const saveLog = async (log, datetime) => {
+  const conn = await pool.getConnection();
+  await conn.beginTransaction();
+  try {
+    // check whether the log on the date already exists        
+    const existingLogID = await query(`
+      SELECT log_id
+      FROM log 
+      WHERE datetime = STR_TO_DATE(? ,"%Y-%m-%d")`, [datetime]);
 
-  // insert new log entries  
-  for (const exercise of log) {
-    for (let i = 0; i < exercise.sets.length; i++) {
-      await query(
-        "INSERT INTO log_entry (log_id, exercise_id, set_number, weight, rep) VALUES (?, ?, ?, ?, ?)",
-        [insertId, exercise.exerciseId, i + 1, exercise.sets[i].weight, exercise.sets[i].rep]);
+    // if it already exists, delete original one
+    if (existingLogID.length > 0) {
+      existingLogID.forEach((value) => {
+        deleteLog(value.log_id);
+      });
+    }
+
+    // insert new log
+    const { insertId } = await query(
+      "INSERT INTO log (datetime) VALUES (?)",
+      [datetime]);
+
+    // insert new log entries  
+    for (const exercise of log) {
+      for (let i = 0; i < exercise.sets.length; i++) {
+        await query(
+          "INSERT INTO log_entry (log_id, exercise_id, set_number, weight, rep) VALUES (?, ?, ?, ?, ?)",
+          [insertId, exercise.exerciseId, i + 1, exercise.sets[i].weight, exercise.sets[i].rep]);
+      };
     };
-  };
+
+    await conn.commit();
+  }
+  catch(err) {
+    conn.rollback();
+    console.log("Rollback successful");
+    throw err;
+  }  
 };
 
 
 
-export { query, getAllExercises, getLog, deleteLog, saveLog };
+export { getAllExercises, getLog, deleteLog, saveLog };
