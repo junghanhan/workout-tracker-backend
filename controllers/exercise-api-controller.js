@@ -1,8 +1,8 @@
-import { query } from "../db.js";
+import { getAllExercises } from "../db.js";
 
-const getAllExercises = async (req, res) => {
+const getAllExercisesHandler = async (req, res) => {
   try {    
-    const exercises = await query("SELECT exercise_id, exercise_name FROM exercise");
+    const exercises = await getAllExercises();
     res.status(200).json(exercises);
   } 
   catch (err) {
@@ -12,4 +12,4 @@ const getAllExercises = async (req, res) => {
 
 
 
-export { getAllExercises };
+export { getAllExercisesHandler };
