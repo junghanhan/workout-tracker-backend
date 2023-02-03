@@ -1,4 +1,5 @@
 import mysql from "mysql2/promise";
+import dayjs from "dayjs";
 
 const pool = mysql.createPool({
   host: process.env.MYSQL_HOST,
@@ -72,29 +73,42 @@ const saveLog = async (log, datetime) => {
       });
     }
 
-    // insert new log
-    const { insertId } = await query(
-      "INSERT INTO log (datetime) VALUES (?)",
-      [datetime]);
+    // insert new log only if there is log entries
+    if (log.length > 0) {
+      const { insertId } = await query(
+        "INSERT INTO log (datetime) VALUES (?)",
+        [datetime]);
 
-    // insert new log entries  
-    for (const exercise of log) {
-      for (let i = 0; i < exercise.sets.length; i++) {
-        await query(
-          "INSERT INTO log_entry (log_id, exercise_id, set_number, weight, rep) VALUES (?, ?, ?, ?, ?)",
-          [insertId, exercise.exerciseId, i + 1, exercise.sets[i].weight, exercise.sets[i].rep]);
+      // insert new log entries  
+      for (const exercise of log) {
+        for (let i = 0; i < exercise.sets.length; i++) {
+          await query(
+            "INSERT INTO log_entry (log_id, exercise_id, set_number, weight, rep) VALUES (?, ?, ?, ?, ?)",
+            [insertId, exercise.exerciseId, i + 1, exercise.sets[i].weight, exercise.sets[i].rep]);
+        };
       };
-    };
+    }
 
     await conn.commit();
   }
-  catch(err) {
+  catch (err) {
     conn.rollback();
     console.log("Rollback successful");
     throw err;
-  }  
+  }
+};
+
+const getWorkoutDays = async (datetime) => {
+  let workoutDays = await query(`SELECT datetime
+    FROM log 
+    WHERE datetime 
+    BETWEEN DATE_ADD(DATE_ADD(LAST_DAY(?),INTERVAL 1 DAY),INTERVAL -1 MONTH)
+    AND LAST_DAY(?)`,
+    [datetime, datetime]);
+
+  workoutDays = workoutDays.map((obj) => Number(dayjs(obj.datetime).format('D')));
+  return workoutDays;
 };
 
 
-
-export { getAllExercises, getLog, deleteLog, saveLog };
+export { getAllExercises, getLog, deleteLog, saveLog, getWorkoutDays };

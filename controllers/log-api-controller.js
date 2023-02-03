@@ -1,4 +1,4 @@
-import { getLog, saveLog } from "../db.js";
+import { getLog, getWorkoutDays, saveLog } from "../db.js";
 
 
 const getLogHandler = async (req, res) => {
@@ -24,4 +24,15 @@ const saveLogHandler = async (req, res) => {
   }
 };
 
-export { getLogHandler, saveLogHandler };
+const getWorkoutDaysHandler = async (req, res) => {
+  try {
+    // TODO: request params validation needed    
+    const workoutDays = await getWorkoutDays(req.params.datetime);
+    res.status(200).json(workoutDays);
+  } catch (err) {
+    console.log(err);
+    res.status(400).send("Bad Request");
+  }
+};
+
+export { getLogHandler, saveLogHandler, getWorkoutDaysHandler };
