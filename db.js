@@ -24,13 +24,13 @@ const getAllExercises = async () => {
 
 // datetime should be in the MySQL date format "%Y-%m-%d"
 const getLog = async (datetime) => {
-  const logData = await query(`SELECT e.exercise_id, e.exercise_name, le.set_number, le.weight, le.rep
+  const log = await query(`SELECT e.exercise_id, e.exercise_name, le.set_number, le.weight, le.rep
     FROM log_entry le
     INNER JOIN log l ON l.log_id = le.log_id
     INNER JOIN exercise e ON e.exercise_id = le.exercise_id
     WHERE l.datetime = STR_TO_DATE(? ,"%Y-%m-%d")`, [datetime]);
 
-  return logData;
+  return log;
 };
 
 // delete log entries(sets) and log using mysql transaction
@@ -50,13 +50,13 @@ const deleteLog = async (logID) => {
   }
   catch (err) {
     conn.rollback();
-    console.log("Rollback successful");
+    console.error("Rollback successful");
     throw err;
   }
 };
 
 // save log using mysql transaction
-const saveLog = async (log, datetime) => {
+const saveLog = async (logEntry, datetime) => {
   const conn = await pool.getConnection();
   await conn.beginTransaction();
   try {
@@ -74,13 +74,13 @@ const saveLog = async (log, datetime) => {
     }
 
     // insert new log only if there is log entries
-    if (log.length > 0) {
+    if (logEntry.length > 0) {
       const { insertId } = await query(
         "INSERT INTO log (datetime) VALUES (?)",
         [datetime]);
 
       // insert new log entries  
-      for (const exercise of log) {
+      for (const exercise of logEntry) {
         for (let i = 0; i < exercise.sets.length; i++) {
           await query(
             "INSERT INTO log_entry (log_id, exercise_id, set_number, weight, rep) VALUES (?, ?, ?, ?, ?)",
@@ -93,7 +93,7 @@ const saveLog = async (log, datetime) => {
   }
   catch (err) {
     conn.rollback();
-    console.log("Rollback successful");
+    console.error("Rollback successful");
     throw err;
   }
 };

@@ -8,7 +8,7 @@ const getLogHandler = async (req, res) => {
     const log = await getLog(req.params.datetime);    
     res.status(200).json(log);
   } catch (err) {
-    console.log(err); 
+    console.error(err); 
     res.status(400).send("Bad Request");
   }
 };
@@ -16,10 +16,10 @@ const getLogHandler = async (req, res) => {
 const saveLogHandler = async (req, res) => {
   try {
     // TODO: request body property validation needed
-    await saveLog(req.body.log, req.body.datetime);
+    await saveLog(req.body.logEntry, req.body.datetime);
     res.status(201).json(req.body);
   } catch (err) {
-    console.log(err); 
+    console.error(err); 
     res.status(400).send("Bad Request");
   }
 };
@@ -30,7 +30,7 @@ const getWorkoutDaysHandler = async (req, res) => {
     const workoutDays = await getWorkoutDays(req.params.datetime);
     res.status(200).json(workoutDays);
   } catch (err) {
-    console.log(err);
+    console.error(err);
     res.status(400).send("Bad Request");
   }
 };
